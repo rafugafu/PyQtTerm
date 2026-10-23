@@ -200,7 +200,9 @@ def press(terminal, key, modifiers=NO_MODS, text=""):
     return sent
 
 
-def mouse_event(kind, x, y, button=Qt.MouseButton.LeftButton, buttons=None, modifiers=NO_MODS):
+def mouse_event(
+    kind, x, y, button=Qt.MouseButton.LeftButton, buttons=None, modifiers=NO_MODS
+):
     position = QPointF(x, y)
     if buttons is None:
         buttons = button
@@ -215,13 +217,22 @@ def click(terminal, x, y, button=Qt.MouseButton.LeftButton, modifiers=NO_MODS):
 
 def release(terminal, x, y, button=Qt.MouseButton.LeftButton, modifiers=NO_MODS):
     terminal.mouseReleaseEvent(
-        mouse_event(QEvent.Type.MouseButtonRelease, x, y, button, Qt.MouseButton.NoButton, modifiers)
+        mouse_event(
+            QEvent.Type.MouseButtonRelease,
+            x,
+            y,
+            button,
+            Qt.MouseButton.NoButton,
+            modifiers,
+        )
     )
 
 
 def drag(terminal, x, y, button=Qt.MouseButton.LeftButton, modifiers=NO_MODS):
     terminal.mouseMoveEvent(
-        mouse_event(QEvent.Type.MouseMove, x, y, Qt.MouseButton.NoButton, button, modifiers)
+        mouse_event(
+            QEvent.Type.MouseMove, x, y, Qt.MouseButton.NoButton, button, modifiers
+        )
     )
 
 
@@ -772,7 +783,9 @@ def test_posix_reader_decodes_output_and_signals_the_end(posix_pty, term):
     assert items == ["héllo", None]
 
 
-def test_posix_reader_reassembles_multibyte_characters_split_across_reads(posix_pty, term):
+def test_posix_reader_reassembles_multibyte_characters_split_across_reads(
+    posix_pty, term
+):
     ready = ([posix_pty.master], [], [])
 
     def second_half_arrives():
@@ -944,9 +957,7 @@ def test_drain_output_ignores_output_after_the_terminal_closed(term):
     assert screen(term)[0] == ""
 
 
-def test_drain_output_spreads_a_large_backlog_over_several_frames(
-    monkeypatch, term
-):
+def test_drain_output_spreads_a_large_backlog_over_several_frames(monkeypatch, term):
     monkeypatch.setattr(pyqtterm_module, "_TERM_FRAME_BUDGET", -1)
     for letter in "abc":
         term._out_q.put(letter)
@@ -1015,7 +1026,15 @@ def test_end_message_uses_the_default_style_and_handles_an_empty_screen(qapp):
 
         terminal._drain_output()
 
-        assert terminal._screen_row(3).styles[0] == ("@fg", "@bg", False, False, False, False, False)
+        assert terminal._screen_row(3).styles[0] == (
+            "@fg",
+            "@bg",
+            False,
+            False,
+            False,
+            False,
+            False,
+        )
         assert screen(terminal)[3] == "[done]"
     finally:
         terminal._terminate_process()
@@ -1394,7 +1413,9 @@ def test_windows_resize_ignores_a_missing_process(windows_pty, term):
         (Qt.Key.Key_Escape, NO_MODS, "\x1b", b"\x1b"),
     ],
 )
-def test_keys_are_translated_to_what_a_terminal_sends(term, key, modifiers, text, expected):
+def test_keys_are_translated_to_what_a_terminal_sends(
+    term, key, modifiers, text, expected
+):
     assert press(term, key, modifiers, text) == expected
 
 
@@ -1515,9 +1536,7 @@ def test_input_method_cursor_rectangle_follows_the_cursor(term):
     assert rectangle == QRect(
         4 * term.charwidth, 2 * term.charheight, term.charwidth, term.charheight
     )
-    assert not isinstance(
-        term.inputMethodQuery(Qt.InputMethodQuery.ImFont), QRect
-    )
+    assert not isinstance(term.inputMethodQuery(Qt.InputMethodQuery.ImFont), QRect)
 
 
 def test_focus_events_are_reported_only_when_requested(term):
@@ -1862,7 +1881,11 @@ def test_hovering_is_reported_only_in_any_motion_mode(term):
     term._process("\x1b[?1002h\x1b[?1006h")
     term.mouseMoveEvent(
         mouse_event(
-            QEvent.Type.MouseMove, 1, 1, Qt.MouseButton.NoButton, Qt.MouseButton.NoButton
+            QEvent.Type.MouseMove,
+            1,
+            1,
+            Qt.MouseButton.NoButton,
+            Qt.MouseButton.NoButton,
         )
     )
     assert term.written == []
@@ -1870,7 +1893,11 @@ def test_hovering_is_reported_only_in_any_motion_mode(term):
     term._process("\x1b[?1003h")
     term.mouseMoveEvent(
         mouse_event(
-            QEvent.Type.MouseMove, 1, 1, Qt.MouseButton.NoButton, Qt.MouseButton.NoButton
+            QEvent.Type.MouseMove,
+            1,
+            1,
+            Qt.MouseButton.NoButton,
+            Qt.MouseButton.NoButton,
         )
     )
 
@@ -1984,7 +2011,9 @@ def wait_for(condition, timeout=5.0):
 
 @pytest.mark.skipif(os.name != "posix", reason="needs a POSIX PTY")
 def test_real_shell_output_input_and_exit(qapp):
-    terminal = Terminal(command=["sh", "-c", "printf 'ready\\n'; read line; echo got:$line"])
+    terminal = Terminal(
+        command=["sh", "-c", "printf 'ready\\n'; read line; echo got:$line"]
+    )
     terminal._cols, terminal._nrows = 40, 5
     fit_to_grid(terminal)
     stopped = collect(terminal.stopped)
@@ -2002,7 +2031,9 @@ def test_real_shell_output_input_and_exit(qapp):
 
 @pytest.mark.skipif(os.name != "posix", reason="needs a POSIX PTY")
 def test_real_shell_gets_a_controlling_terminal_of_the_right_size(qapp):
-    terminal = Terminal(command=["sh", "-c", "tty >/dev/null && stty size && echo done"])
+    terminal = Terminal(
+        command=["sh", "-c", "tty >/dev/null && stty size && echo done"]
+    )
     terminal._cols, terminal._nrows = 33, 6
     fit_to_grid(terminal)
     try:
@@ -2018,7 +2049,11 @@ def test_real_shell_gets_a_controlling_terminal_of_the_right_size(qapp):
 @pytest.mark.skipif(os.name != "posix", reason="needs a POSIX PTY")
 def test_real_shell_resize_reaches_the_program(qapp):
     terminal = Terminal(
-        command=["sh", "-c", "trap 'stty size' WINCH; stty size; while :; do sleep 0.05; done"]
+        command=[
+            "sh",
+            "-c",
+            "trap 'stty size' WINCH; stty size; while :; do sleep 0.05; done",
+        ]
     )
     terminal._cols, terminal._nrows = 40, 5
     fit_to_grid(terminal)

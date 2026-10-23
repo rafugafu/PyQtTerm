@@ -32,8 +32,7 @@ def fit_to_grid(terminal):
 
 def screen(terminal):
     return [
-        "".join(terminal._screen_row(y).chars).rstrip()
-        for y in range(terminal._nrows)
+        "".join(terminal._screen_row(y).chars).rstrip() for y in range(terminal._nrows)
     ]
 
 

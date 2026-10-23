@@ -768,7 +768,15 @@ def test_nocolor_terminal_ignores_sgr(qapp):
     try:
         terminal._process("\x1b[31;1mX")
 
-        assert terminal._screen_row(0).styles[0] == ("@fg", "@bg", False, False, False, False, False)
+        assert terminal._screen_row(0).styles[0] == (
+            "@fg",
+            "@bg",
+            False,
+            False,
+            False,
+            False,
+            False,
+        )
     finally:
         terminal._terminate_process()
 

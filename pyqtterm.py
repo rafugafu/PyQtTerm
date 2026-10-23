@@ -536,8 +536,12 @@ class Terminal(QAbstractScrollArea):
         otherwise the widget's palette), and repaint."""
         _fg, _bg = self._term_custom_default_colors
         palette = self.palette()
-        self._default_fg = QColor(_fg) if _fg else palette.color(QPalette.ColorRole.Text)
-        self._default_bg = QColor(_bg) if _bg else palette.color(QPalette.ColorRole.Base)
+        self._default_fg = (
+            QColor(_fg) if _fg else palette.color(QPalette.ColorRole.Text)
+        )
+        self._default_bg = (
+            QColor(_bg) if _bg else palette.color(QPalette.ColorRole.Base)
+        )
         if not self._cursor_color_custom:
             self._cursor_color = self._default_fg
         self._update_paint_colors()
@@ -738,7 +742,9 @@ class Terminal(QAbstractScrollArea):
                     if c and c != " ":
                         painter.drawText(k * charw, baseline, c)
             if style[4]:
-                painter.fillRect(i * charw, y + self._char_ascent + 1, (j - i) * charw, 1, fg)
+                painter.fillRect(
+                    i * charw, y + self._char_ascent + 1, (j - i) * charw, 1, fg
+                )
             if style[5]:
                 painter.fillRect(i * charw, y + charh // 2, (j - i) * charw, 1, fg)
             i = j
@@ -861,7 +867,9 @@ class Terminal(QAbstractScrollArea):
             # terminal background when they can't query it directly.
             _fg_is_light = self._default_fg.lightnessF() >= 0.5
             _bg_is_light = self._default_bg.lightnessF() >= 0.5
-            env["COLORFGBG"] = f"{15 if _fg_is_light else 0};{15 if _bg_is_light else 0}"
+            env["COLORFGBG"] = (
+                f"{15 if _fg_is_light else 0};{15 if _bg_is_light else 0}"
+            )
             self.proc = subprocess.Popen(
                 self._term_command if self._term_command else [shell],
                 stdin=slave_fd,
@@ -1081,7 +1089,11 @@ class Terminal(QAbstractScrollArea):
         elif n > cols:
             del row.chars[cols:]
             del row.styles[cols:]
-            if cols and row.chars[cols - 1] and _term_char_width(row.chars[cols - 1][0]) == 2:
+            if (
+                cols
+                and row.chars[cols - 1]
+                and _term_char_width(row.chars[cols - 1][0]) == 2
+            ):
                 row.chars[cols - 1] = " "
 
     def _term_reshape_primary(self, rows_list, cy, new_rows, new_cols):
@@ -1128,7 +1140,9 @@ class Terminal(QAbstractScrollArea):
             for row in self._rows:
                 self._term_row_resize_cells(row, cols)
             if rows > len(self._rows):
-                self._rows.extend(_TerminalRow(cols) for _ in range(rows - len(self._rows)))
+                self._rows.extend(
+                    _TerminalRow(cols) for _ in range(rows - len(self._rows))
+                )
             else:
                 del self._rows[rows:]
             self._cy = min(self._cy, rows - 1)
@@ -1187,7 +1201,9 @@ class Terminal(QAbstractScrollArea):
             if c == "":
                 if i == 0 or not chars[i - 1] or _term_char_width(chars[i - 1][0]) != 2:
                     chars[i] = " "
-            elif _term_char_width(c[0]) == 2 and (i + 1 >= len(chars) or chars[i + 1] != ""):
+            elif _term_char_width(c[0]) == 2 and (
+                i + 1 >= len(chars) or chars[i + 1] != ""
+            ):
                 chars[i] = " "
 
     def _fill_row(self, y, start, end):
@@ -1247,7 +1263,9 @@ class Terminal(QAbstractScrollArea):
         """Clamp a 1-based cursor-addressing row to a 0-based screen row,
         within the scroll region if origin mode (DECOM) is set."""
         if self._origin_mode:
-            return min(max(self._scroll_top, self._scroll_top + row - 1), self._scroll_bot)
+            return min(
+                max(self._scroll_top, self._scroll_top + row - 1), self._scroll_bot
+            )
         return min(max(0, row - 1), self._nrows - 1)
 
     def _cursor_home(self):
@@ -1632,7 +1650,11 @@ class Terminal(QAbstractScrollArea):
                     self._full_reset()
                     i += 2
                 elif nxt == "7":
-                    self._saved_cursor = (self._alt_mode, self._cy, self._term_effective_cx())
+                    self._saved_cursor = (
+                        self._alt_mode,
+                        self._cy,
+                        self._term_effective_cx(),
+                    )
                     self._saved_sgr = dict(self._sgr_state)
                     i += 2
                 elif nxt == "8":
@@ -1729,8 +1751,12 @@ class Terminal(QAbstractScrollArea):
             if self._scroll_top <= y <= self._scroll_bot:
                 n = min(mv, self._scroll_bot - y + 1)
                 base = len(self._rows) - nrows
-                del self._rows[base + self._scroll_bot - n + 1 : base + self._scroll_bot + 1]
-                self._rows[base + y : base + y] = [self._new_row(self._erase_style) for _ in range(n)]
+                del self._rows[
+                    base + self._scroll_bot - n + 1 : base + self._scroll_bot + 1
+                ]
+                self._rows[base + y : base + y] = [
+                    self._new_row(self._erase_style) for _ in range(n)
+                ]
                 self._cx = 0
         elif cmd == "M":
             if self._scroll_top <= y <= self._scroll_bot:
@@ -1949,7 +1975,9 @@ class Terminal(QAbstractScrollArea):
             and 0x20 <= key <= 0x7E
             and (self._modify_other_keys == 2 or not text)
         ):
-            _code = key + 32 if Qt.Key.Key_A <= key <= Qt.Key.Key_Z and not shift else key
+            _code = (
+                key + 32 if Qt.Key.Key_A <= key <= Qt.Key.Key_Z and not shift else key
+            )
             self._write(f"\x1b[27;{_kmod};{_code}~".encode())
         elif text:
             self._write(text.encode("utf-8"))
@@ -2136,7 +2164,16 @@ class Terminal(QAbstractScrollArea):
             if release:
                 cb = 3 + mods
             self._write(
-                bytes([27, ord("["), ord("M"), min(cb + 32, 255), min(col + 32, 255), min(row + 32, 255)])
+                bytes(
+                    [
+                        27,
+                        ord("["),
+                        ord("M"),
+                        min(cb + 32, 255),
+                        min(col + 32, 255),
+                        min(row + 32, 255),
+                    ]
+                )
             )
         self._mouse_last_pos = (col, row)
         return True
@@ -2178,14 +2215,17 @@ class Terminal(QAbstractScrollArea):
                 self._select_word(*self._term_line_col(pos, boundary=False))
             elif (
                 self._last_double_click_time is not None
-                and now - self._last_double_click_time < QApplication.doubleClickInterval() / 1000
+                and now - self._last_double_click_time
+                < QApplication.doubleClickInterval() / 1000
             ):
                 self._last_double_click_time = None
                 line = self._term_line_col(pos, boundary=False)[0]
                 self._sel_anchor = (line, 0)
                 self._sel_head = (line, len(self._rows[line].chars))
             else:
-                self._sel_anchor = self._sel_head = self._term_line_col(pos, boundary=True)
+                self._sel_anchor = self._sel_head = self._term_line_col(
+                    pos, boundary=True
+                )
                 self._selecting = True
             self.viewport().update()
         elif button == Qt.MouseButton.MiddleButton:
@@ -2252,7 +2292,9 @@ class Terminal(QAbstractScrollArea):
             return
         up = delta > 0
         steps = max(1, abs(delta) // 120)
-        if self._mouse_mode and not (event.modifiers() & Qt.KeyboardModifier.ShiftModifier):
+        if self._mouse_mode and not (
+            event.modifiers() & Qt.KeyboardModifier.ShiftModifier
+        ):
             for _ in range(steps):
                 self._term_send_mouse(64 if up else 65, event)
             event.accept()
